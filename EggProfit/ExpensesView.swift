@@ -5,6 +5,7 @@ struct ExpensesView: View {
     @State private var newExpense = Expense(category: "feed", amount: 0, date: Date())
     @State private var showAdd = false
     @State private var showToast = false
+    @State private var toastMessage = "Expense Saved!"
     @State private var noteInput = ""
     
     let categories = ["feed", "electricity/heating", "bedding", "water", "veterinary/vaccines", "depreciation", "other"]
@@ -25,7 +26,7 @@ struct ExpensesView: View {
                 .sheet(isPresented: $showAdd) {
                     addExpenseSheet
                 }
-                .overlay(PremiumToast(message: "Expense Saved!", show: $showToast))
+                .overlay(PremiumToast(message: toastMessage, show: $showToast))
         }
     }
     
@@ -126,11 +127,24 @@ struct ExpensesView: View {
                 ToolbarItem(placement: .topBarTrailing) {
                     FieryButton(title: "Save") {
                         newExpense.note = noteInput.isEmpty ? nil : noteInput
-                        if newExpense.amount > 0 {
+                        if newExpense.amount.isNaN || newExpense.amount.isInfinite ||
+                           (newExpense.quantity != nil && (newExpense.quantity!.isNaN || newExpense.quantity!.isInfinite)) ||
+                           (newExpense.unitCost != nil && (newExpense.unitCost!.isNaN || newExpense.unitCost!.isInfinite)) {
+                            toastMessage = "Invalid input values!"
+                            showToast = true
+                        } else {
+                            if newExpense.amount == 0 {
+                                toastMessage = "Warning: Expense amount is zero."
+                            } else {
+                                toastMessage = "Expense Saved!"
+                            }
                             dataManager.expenses.append(newExpense)
                             dataManager.saveData()
                             showAdd = false
                             showToast = true
+                            // Reset fields
+                            newExpense = Expense(category: "feed", amount: 0, date: Date())
+                            noteInput = ""
                         }
                     }
                 }

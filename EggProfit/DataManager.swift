@@ -23,6 +23,7 @@ class DataManager: ObservableObject {
             do {
                 let encodedExpenses = try JSONEncoder().encode(self.expenses)
                 UserDefaults.standard.set(encodedExpenses, forKey: self.expensesKey)
+                print("Expenses saved successfully: \(self.expenses.count) items")
             } catch {
                 print("Failed to encode expenses: \(error)")
                 DispatchQueue.main.async {
@@ -38,6 +39,7 @@ class DataManager: ObservableObject {
             do {
                 let encodedIncomes = try JSONEncoder().encode(self.incomes)
                 UserDefaults.standard.set(encodedIncomes, forKey: self.incomesKey)
+                print("Incomes saved successfully: \(self.incomes.count) items")
             } catch {
                 print("Failed to encode incomes: \(error)")
                 DispatchQueue.main.async {
@@ -52,6 +54,7 @@ class DataManager: ObservableObject {
             do {
                 let encodedSettings = try JSONEncoder().encode(self.settings)
                 UserDefaults.standard.set(encodedSettings, forKey: self.settingsKey)
+                print("Settings saved successfully")
             } catch {
                 print("Failed to encode settings: \(error)")
             }
@@ -59,6 +62,7 @@ class DataManager: ObservableObject {
             do {
                 let encodedKPI = try JSONEncoder().encode(self.kpiCache)
                 UserDefaults.standard.set(encodedKPI, forKey: self.kpiKey)
+                print("KPI saved successfully")
             } catch {
                 print("Failed to encode KPI: \(error)")
             }
@@ -73,18 +77,22 @@ class DataManager: ObservableObject {
         if let data = UserDefaults.standard.data(forKey: expensesKey),
            let decoded = try? JSONDecoder().decode([Expense].self, from: data) {
             expenses = decoded
+            print("Loaded \(expenses.count) expenses")
         }
         if let data = UserDefaults.standard.data(forKey: incomesKey),
            let decoded = try? JSONDecoder().decode([Income].self, from: data) {
             incomes = decoded
+            print("Loaded \(incomes.count) incomes")
         }
         if let data = UserDefaults.standard.data(forKey: settingsKey),
            let decoded = try? JSONDecoder().decode(AppSettings.self, from: data) {
             settings = decoded
+            print("Loaded settings")
         }
         if let data = UserDefaults.standard.data(forKey: kpiKey),
            let decoded = try? JSONDecoder().decode(KPI.self, from: data) {
             kpiCache = decoded
+            print("Loaded KPI")
         }
     }
     
@@ -145,12 +153,19 @@ class DataManager: ObservableObject {
     func exportCSV() -> URL? {
         let csvString = "ID,Category,Amount,Date\n" + expenses.map { "\($0.id),\($0.category),\($0.amount),\($0.date)" }.joined(separator: "\n")
         let fileURL = FileManager.default.temporaryDirectory.appendingPathComponent("expenses.csv")
-        try? csvString.write(to: fileURL, atomically: true, encoding: .utf8)
-        return fileURL
+        do {
+            try csvString.write(to: fileURL, atomically: true, encoding: .utf8)
+            print("CSV exported to: \(fileURL)")
+            return fileURL
+        } catch {
+            print("Failed to export CSV: \(error)")
+            return nil
+        }
     }
     
     func backupToiCloud() {
         NSUbiquitousKeyValueStore.default.set(UserDefaults.standard.dictionaryRepresentation(), forKey: "allData")
         NSUbiquitousKeyValueStore.default.synchronize()
+        print("iCloud backup completed")
     }
 }

@@ -5,6 +5,7 @@ struct IncomesView: View {
     @State private var newIncome = Income(quantity: 0, pricePerUnit: 0, channel: "market", date: Date())
     @State private var showAdd = false
     @State private var showToast = false
+    @State private var toastMessage = "Income Saved!"
     @State private var buyerInput = ""
     
     let channels = ["market", "wholesale", "friends/neighbors"]
@@ -25,7 +26,7 @@ struct IncomesView: View {
                 .sheet(isPresented: $showAdd) {
                     addIncomeSheet
                 }
-                .overlay(PremiumToast(message: "Income Saved!", show: $showToast))
+                .overlay(PremiumToast(message: toastMessage, show: $showToast))
         }
     }
     
@@ -121,11 +122,23 @@ struct IncomesView: View {
                 ToolbarItem(placement: .topBarTrailing) {
                     FieryButton(title: "Save") {
                         newIncome.buyer = buyerInput.isEmpty ? nil : buyerInput
-                        if newIncome.quantity > 0 && newIncome.pricePerUnit > 0 {
+                        if newIncome.quantity.isNaN || newIncome.quantity.isInfinite ||
+                           newIncome.pricePerUnit.isNaN || newIncome.pricePerUnit.isInfinite {
+                            toastMessage = "Invalid input values!"
+                            showToast = true
+                        } else {
+                            if newIncome.quantity == 0 || newIncome.pricePerUnit == 0 {
+                                toastMessage = "Warning: Quantity or price is zero."
+                            } else {
+                                toastMessage = "Income Saved!"
+                            }
                             dataManager.incomes.append(newIncome)
                             dataManager.saveData()
                             showAdd = false
                             showToast = true
+                            // Reset fields
+                            newIncome = Income(quantity: 0, pricePerUnit: 0, channel: "market", date: Date())
+                            buyerInput = ""
                         }
                     }
                 }
