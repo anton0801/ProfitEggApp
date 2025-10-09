@@ -76,11 +76,7 @@ struct SettingsView: View {
                     showToast = true
                 }
                 .foregroundColor(.design(.successLime))
-                
-                Button("Import from CSV") {
-                    // File picker logic
-                }
-                .foregroundColor(.design(.textSecondary))
+
             }
             .listRowBackground(Color.design(.cardBackground).opacity(0.3))
             
