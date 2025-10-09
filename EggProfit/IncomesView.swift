@@ -7,6 +7,7 @@ struct IncomesView: View {
     @State private var showToast = false
     @State private var toastMessage = "Income Saved!"
     @State private var buyerInput = ""
+    @State private var priceInput = "" // String binding для цены
     
     let channels = ["market", "wholesale", "friends/neighbors"]
     let channelIcons = ["building.2.fill", "arrow.down.circle.fill", "person.2.fill"]
@@ -108,7 +109,7 @@ struct IncomesView: View {
                     TextField("Eggs Quantity", value: $newIncome.quantity, format: .number)
                         .keyboardType(.numberPad)
                     
-                    TextField("Price per \(dataManager.settings.priceMode)", value: $newIncome.pricePerUnit, format: .currency(code: dataManager.settings.currency))
+                    TextField("Price per \(dataManager.settings.priceMode) (\(dataManager.settings.currency))", text: $priceInput)
                         .keyboardType(.decimalPad)
                     
                     DatePicker("Date", selection: $newIncome.date, displayedComponents: .date)
@@ -121,7 +122,12 @@ struct IncomesView: View {
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     FieryButton(title: "Save") {
+                        let price = Double(priceInput) ?? newIncome.pricePerUnit
+                        newIncome.pricePerUnit = price
+                        
                         newIncome.buyer = buyerInput.isEmpty ? nil : buyerInput
+                        
+                        // Валидация входных данных
                         if newIncome.quantity.isNaN || newIncome.quantity.isInfinite ||
                            newIncome.pricePerUnit.isNaN || newIncome.pricePerUnit.isInfinite {
                             toastMessage = "Invalid input values!"
@@ -132,12 +138,16 @@ struct IncomesView: View {
                             } else {
                                 toastMessage = "Income Saved!"
                             }
+                            
+                            // Сохраняем доход
                             dataManager.incomes.append(newIncome)
                             dataManager.saveData()
                             showAdd = false
                             showToast = true
-                            // Reset fields
+                            
+                            // Сбрасываем поля для следующего ввода
                             newIncome = Income(quantity: 0, pricePerUnit: 0, channel: "market", date: Date())
+                            priceInput = ""
                             buyerInput = ""
                         }
                     }

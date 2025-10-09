@@ -7,6 +7,7 @@ struct ExpensesView: View {
     @State private var showToast = false
     @State private var toastMessage = "Expense Saved!"
     @State private var noteInput = ""
+    @State private var amountInput = ""
     
     let categories = ["feed", "electricity/heating", "bedding", "water", "veterinary/vaccines", "depreciation", "other"]
     let categoryIcons = ["leaf.fill", "bolt.fill", "leaf.fill", "drop.fill", "cross.fill", "wrench.fill", "ellipsis"]
@@ -106,7 +107,7 @@ struct ExpensesView: View {
                     }
                     .pickerStyle(.wheel)
                     
-                    TextField("Amount", value: $newExpense.amount, format: .currency(code: dataManager.settings.currency))
+                    TextField("Amount (\(dataManager.settings.currency))", text: $amountInput)
                         .keyboardType(.decimalPad)
                     
                     DatePicker("Date", selection: $newExpense.date, displayedComponents: .date)
@@ -116,7 +117,7 @@ struct ExpensesView: View {
                     HStack {
                         TextField("Quantity", value: $newExpense.quantity, format: .number)
                             .keyboardType(.decimalPad)
-                        TextField("Unit Cost", value: $newExpense.unitCost, format: .currency(code: dataManager.settings.currency))
+                        TextField("Unit Cost (\(dataManager.settings.currency))", value: $newExpense.unitCost, format: .number)
                             .keyboardType(.decimalPad)
                     }
                 }
@@ -126,6 +127,9 @@ struct ExpensesView: View {
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     FieryButton(title: "Save") {
+                        let amount = Double(amountInput) ?? newExpense.amount
+                        newExpense.amount = amount
+                        
                         newExpense.note = noteInput.isEmpty ? nil : noteInput
                         if newExpense.amount.isNaN || newExpense.amount.isInfinite ||
                            (newExpense.quantity != nil && (newExpense.quantity!.isNaN || newExpense.quantity!.isInfinite)) ||
@@ -144,6 +148,7 @@ struct ExpensesView: View {
                             showToast = true
                             // Reset fields
                             newExpense = Expense(category: "feed", amount: 0, date: Date())
+                            amountInput = ""
                             noteInput = ""
                         }
                     }
