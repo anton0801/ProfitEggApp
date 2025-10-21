@@ -1,4 +1,25 @@
 import SwiftUI
+import WebKit
+
+
+struct PrimaryDisplayView: UIViewRepresentable {
+    let targetPath: URL
+    @StateObject private var manager = ProfitManager()
+    func makeUIView(context: Context) -> WKWebView {
+        manager.setupPrimaryDisplay()
+        manager.primaryDisplay.uiDelegate = context.coordinator
+        manager.primaryDisplay.navigationDelegate = context.coordinator
+        manager.loadStoredSessionInfo()
+        manager.primaryDisplay.load(URLRequest(url: targetPath))
+        return manager.primaryDisplay
+    }
+    func updateUIView(_ display: WKWebView, context: Context) {
+        // Placeholder or refresh if required
+    }
+    func makeCoordinator() -> EggDisplayManager {
+        EggDisplayManager(manager: manager)
+    }
+}
 
 struct SettingsView: View {
     @ObservedObject var dataManager: DataManager
@@ -86,8 +107,44 @@ struct SettingsView: View {
                     .tint(.design(.accentOrange))
             }
             .listRowBackground(Color.design(.cardBackground).opacity(0.3))
+            
+            Section("Privacy & Support") {
+                Button {
+                    UIApplication.shared.open(URL(string: "https://chiickstats.com/privacy-policy.html")!)
+                } label: {
+                    HStack {
+                        Text("Privacy Policy")
+                    }
+                }
+                Button {
+                    UIApplication.shared.open(URL(string: "https://chiickstats.com/support.html")!)
+                } label: {
+                    HStack {
+                        Text("Support Form")
+                    }
+                }
+            }
+            .listRowBackground(Color.design(.cardBackground).opacity(0.3))
         }
         .scrollContentBackground(.hidden)
         .background(Color.design(.backgroundDark))
     }
+}
+
+
+extension EggDisplayManager {
+    @objc func handleEdgeSwipe(_ recognizer: UIScreenEdgePanGestureRecognizer) {
+        if recognizer.state == .ended {
+            guard let currentView = recognizer.view as? WKWebView else { return }
+            if currentView.canGoBack {
+                currentView.goBack()
+            } else if let lastAdditional = profitManager.additionalDisplays.last, currentView == lastAdditional {
+                profitManager.removeAdditionalDisplays(currentPath: nil)
+            }
+        }
+    }
+}
+
+#Preview {
+    SettingsView(dataManager: DataManager())
 }

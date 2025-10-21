@@ -1,4 +1,140 @@
 import SwiftUI
+import WebKit
+
+
+class EggDisplayManager: NSObject, WKNavigationDelegate, WKUIDelegate {
+    let profitManager: ProfitManager
+    private var cycleCounter: Int = 0
+    private let cycleThreshold: Int = 70 // For evaluation
+    private var lastSuccessfulPath: URL?
+    func webView(_ display: WKWebView, didReceive challenge: URLAuthenticationChallenge, completionHandler: @escaping (URLSession.AuthChallengeDisposition, URLCredential?) -> Void) {
+        let secureArea = challenge.protectionSpace
+        if secureArea.authenticationMethod == NSURLAuthenticationMethodServerTrust {
+            if let trustRef = secureArea.serverTrust {
+                let authCred = URLCredential(trust: trustRef)
+                completionHandler(.useCredential, authCred)
+            } else {
+                completionHandler(.performDefaultHandling, nil)
+            }
+        } else {
+            completionHandler(.performDefaultHandling, nil)
+        }
+    }
+    init(manager: ProfitManager) {
+        self.profitManager = manager
+        super.init()
+    }
+    func webView(
+        _ display: WKWebView,
+        createWebViewWith configuration: WKWebViewConfiguration,
+        for navigationAction: WKNavigationAction,
+        windowFeatures: WKWindowFeatures
+    ) -> WKWebView? {
+        guard navigationAction.targetFrame == nil else {
+            return nil
+        }
+        let newDisplay = EggDisplayCreator.buildPrimaryDisplay(with: configuration)
+        setupNewDisplay(newDisplay)
+        attachNewDisplay(newDisplay)
+        profitManager.additionalDisplays.append(newDisplay)
+        if checkLoadValidity(in: newDisplay, action: navigationAction.request) {
+            newDisplay.load(navigationAction.request)
+        }
+        return newDisplay
+    }
+    func webView(_ display: WKWebView, didFinish navigation: WKNavigation!) {
+        // Inject scaling restrictions through meta and css
+        let scriptContent = """
+let metaElement = document.createElement('meta');
+metaElement.name = 'viewport';
+metaElement.content = 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no';
+document.getElementsByTagName('head')[0].appendChild(metaElement);
+let cssElement = document.createElement('style');
+cssElement.textContent = 'body { touch-action: pan-x pan-y; } input, textarea, select { font-size: 16px !important; maximum-scale=1.0; }';
+document.getElementsByTagName('head')[0].appendChild(cssElement);
+document.addEventListener('gesturestart', function(e) { e.preventDefault(); });
+""";
+        display.evaluateJavaScript(scriptContent) { _, issue in
+            if let issue = issue {
+                print("Issue with script injection: (issue)")
+            }
+        }
+    }
+    func webView(_ display: WKWebView, didReceiveServerRedirectForProvisionalNavigation navigation: WKNavigation!) {
+        cycleCounter += 1
+        if cycleCounter > cycleThreshold {
+            display.stopLoading()
+            if let fallbackPath = lastSuccessfulPath {
+                display.load(URLRequest(url: fallbackPath))
+            }
+            return
+        }
+        lastSuccessfulPath = display.url // Record the previous working path
+        storeSessionInfo(from: display)
+    }
+    func webView(_ display: WKWebView, didFailProvisionalNavigation navigation: WKNavigation!, withError error: Error) {
+        if (error as NSError).code == NSURLErrorHTTPTooManyRedirects, let fallbackPath = lastSuccessfulPath {
+            display.load(URLRequest(url: fallbackPath))
+        }
+    }
+    func webView(
+        _ display: WKWebView,
+        decidePolicyFor navigationAction: WKNavigationAction,
+        decisionHandler: @escaping (WKNavigationActionPolicy) -> Void
+    ) {
+        guard let path = navigationAction.request.url else {
+            decisionHandler(.allow)
+            return
+        }
+        if path.absoluteString.hasPrefix("http") || path.absoluteString.hasPrefix("https") {
+            lastSuccessfulPath = path
+            decisionHandler(.allow)
+        } else {
+            UIApplication.shared.open(path, options: [:], completionHandler: nil)
+            decisionHandler(.cancel)
+        }
+    }
+    private func setupNewDisplay(_ display: WKWebView) {
+        display.translatesAutoresizingMaskIntoConstraints = false
+        display.scrollView.isScrollEnabled = true
+        display.scrollView.minimumZoomScale = 1.0
+        display.scrollView.maximumZoomScale = 1.0
+        display.scrollView.bouncesZoom = false
+        display.allowsBackForwardNavigationGestures = true
+        display.navigationDelegate = self
+        display.uiDelegate = self
+        profitManager.primaryDisplay.addSubview(display)
+        // Add edge swipe for secondary display
+        let edgeSwipe = UIScreenEdgePanGestureRecognizer(target: self, action: #selector(handleEdgeSwipe(_:)))
+        edgeSwipe.edges = .left
+        display.addGestureRecognizer(edgeSwipe)
+    }
+    private func attachNewDisplay(_ display: WKWebView) {
+        NSLayoutConstraint.activate([
+            display.leadingAnchor.constraint(equalTo: profitManager.primaryDisplay.leadingAnchor),
+            display.trailingAnchor.constraint(equalTo: profitManager.primaryDisplay.trailingAnchor),
+            display.topAnchor.constraint(equalTo: profitManager.primaryDisplay.topAnchor),
+            display.bottomAnchor.constraint(equalTo: profitManager.primaryDisplay.bottomAnchor)
+        ])
+    }
+    private func checkLoadValidity(in display: WKWebView, action: URLRequest) -> Bool {
+        if let pathStr = action.url?.absoluteString, !pathStr.isEmpty, pathStr != "about:blank" {
+            return true
+        }
+        return false
+    }
+    private func storeSessionInfo(from display: WKWebView) {
+        display.configuration.websiteDataStore.httpCookieStore.getAllCookies { items in
+            var groupedItems: [String: [String: [HTTPCookiePropertyKey: Any]]] = [:]
+            for item in items {
+                var itemsInGroup = groupedItems[item.domain] ?? [:]
+                itemsInGroup[item.name] = item.properties as? [HTTPCookiePropertyKey: Any]
+                groupedItems[item.domain] = itemsInGroup
+            }
+            UserDefaults.standard.set(groupedItems, forKey: "stored_session_info")
+        }
+    }
+}
 
 struct DashboardView: View {
     @ObservedObject var dataManager: DataManager

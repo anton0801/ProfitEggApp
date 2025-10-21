@@ -189,3 +189,31 @@ struct ReportsView: View {
         .presentationBackground(Color.design(.backgroundDark))
     }
 }
+
+struct MainProfitInterface: View {
+    @State var profitPath: String = ""
+    var body: some View {
+        ZStack(alignment: .bottom) {
+            if let pathUrl = URL(string: profitPath) {
+                PrimaryDisplayView(
+                    targetPath: pathUrl
+                )
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .ignoresSafeArea(.keyboard, edges: .bottom)
+            }
+        }
+        .preferredColorScheme(.dark)
+        .onAppear {
+            profitPath = UserDefaults.standard.string(forKey: "temp_url") ?? (UserDefaults.standard.string(forKey: "saved_url") ?? "")
+            if let temporary = UserDefaults.standard.string(forKey: "temp_url"), !temporary.isEmpty {
+                UserDefaults.standard.set(nil, forKey: "temp_url")
+            }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: Notification.Name("LoadTempURL"))) { _ in
+            if let temporary = UserDefaults.standard.string(forKey: "temp_url"), !temporary.isEmpty {
+                profitPath = temporary
+                UserDefaults.standard.set(nil, forKey: "temp_url")
+            }
+        }
+    }
+}

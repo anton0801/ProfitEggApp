@@ -2,14 +2,25 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>BGTaskSchedulerPermittedIdentifiers</key>
+	<array>
+		<string>com.profitcalc.EggProfit.profitappgsdaback</string>
+	</array>
 	<key>UIAppFonts</key>
 	<array>
 		<string>Inter-Regular.ttf</string>
 		<string>Inter-Medium.ttf</string>
 		<string>Inter-Bold.ttf</string>
 		<string>Nunito-Regular.ttf</string>
+		<string>AlfaSlabOne-Regular.ttf</string>
 		<string>Nunito-Medium.ttf</string>
 		<string>Nunito-Bold.ttf</string>
+	</array>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>processing</string>
+		<string>fetch</string>
+		<string>remote-notification</string>
 	</array>
 </dict>
 </plist>

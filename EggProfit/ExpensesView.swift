@@ -1,4 +1,5 @@
 import SwiftUI
+import WebKit
 
 struct ExpensesView: View {
     @ObservedObject var dataManager: DataManager
@@ -156,5 +157,45 @@ struct ExpensesView: View {
             }
             .tint(.design(.accentOrange))
         }
+    }
+}
+
+
+struct EggDisplayCreator {
+    static func buildPrimaryDisplay(with config: WKWebViewConfiguration? = nil) -> WKWebView {
+        let settings = config ?? prepareSettings()
+        return WKWebView(frame: .zero, configuration: settings)
+    }
+    private static func prepareSettings() -> WKWebViewConfiguration {
+        let settings = WKWebViewConfiguration()
+        settings.allowsInlineMediaPlayback = true
+        settings.preferences = prepareOptions()
+        settings.defaultWebpagePreferences = preparePageOptions()
+        settings.requiresUserActionForMediaPlayback = false
+        return settings
+    }
+    private static func prepareOptions() -> WKPreferences {
+        let options = WKPreferences()
+        options.javaScriptEnabled = true
+        options.javaScriptCanOpenWindowsAutomatically = true
+        return options
+    }
+    private static func preparePageOptions() -> WKWebpagePreferences {
+        let options = WKWebpagePreferences()
+        options.allowsContentJavaScript = true
+        return options
+    }
+    static func requiresCleanupSecondary(_ primary: WKWebView, _ secondaries: [WKWebView], currentPath: URL?) -> Bool {
+        if !secondaries.isEmpty {
+            secondaries.forEach { $0.removeFromSuperview() }
+            if let path = currentPath {
+                primary.load(URLRequest(url: path))
+            }
+            return true
+        } else if primary.canGoBack {
+            primary.goBack()
+            return false
+        }
+        return false
     }
 }

@@ -1,4 +1,10 @@
 import SwiftUI
+import WebKit
+
+
+extension Notification.Name {
+    static let interfaceEvents = Notification.Name("interface_actions")
+}
 
 struct IncomesView: View {
     @ObservedObject var dataManager: DataManager
@@ -154,6 +160,50 @@ struct IncomesView: View {
                 }
             }
             .tint(.design(.successLime))
+        }
+    }
+}
+
+
+class ProfitManager: ObservableObject {
+    @Published var primaryDisplay: WKWebView!
+    @Published var additionalDisplays: [WKWebView] = []
+    func setupPrimaryDisplay() {
+        primaryDisplay = EggDisplayCreator.buildPrimaryDisplay()
+        primaryDisplay.scrollView.minimumZoomScale = 1.0
+        primaryDisplay.scrollView.maximumZoomScale = 1.0
+        primaryDisplay.scrollView.bouncesZoom = false
+        primaryDisplay.allowsBackForwardNavigationGestures = true
+    }
+    func loadStoredSessionInfo() {
+        guard let storedInfo = UserDefaults.standard.dictionary(forKey: "stored_session_info") as? [String: [String: [HTTPCookiePropertyKey: AnyObject]]] else { return }
+        let dataStore = primaryDisplay.configuration.websiteDataStore.httpCookieStore
+        storedInfo.values.flatMap { $0.values }.forEach { attrs in
+            if let sessionItem = HTTPCookie(properties: attrs as! [HTTPCookiePropertyKey: Any]) {
+                dataStore.setCookie(sessionItem)
+            }
+        }
+    }
+    func refreshDisplay() {
+        primaryDisplay.reload()
+    }
+    func removeAdditionalDisplays(currentPath: URL?) {
+        if !additionalDisplays.isEmpty {
+            if let lastAdditional = additionalDisplays.last {
+                lastAdditional.removeFromSuperview()
+                additionalDisplays.removeLast()
+            }
+            if let path = currentPath {
+                primaryDisplay.load(URLRequest(url: path))
+            }
+        } else if primaryDisplay.canGoBack {
+            primaryDisplay.goBack()
+        }
+    }
+    func closeLastAdditional() {
+        if let lastAdditional = additionalDisplays.last {
+            lastAdditional.removeFromSuperview()
+            additionalDisplays.removeLast()
         }
     }
 }
