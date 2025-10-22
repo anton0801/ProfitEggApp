@@ -110,14 +110,14 @@ struct SettingsView: View {
             
             Section("Privacy & Support") {
                 Button {
-                    UIApplication.shared.open(URL(string: "https://chiickstats.com/privacy-policy.html")!)
+                    UIApplication.shared.open(URL(string: "https://eggprofit.com/privacy-policy.html")!)
                 } label: {
                     HStack {
                         Text("Privacy Policy")
                     }
                 }
                 Button {
-                    UIApplication.shared.open(URL(string: "https://chiickstats.com/support.html")!)
+                    UIApplication.shared.open(URL(string: "https://eggprofit.com/support.html")!)
                 } label: {
                     HStack {
                         Text("Support Form")
