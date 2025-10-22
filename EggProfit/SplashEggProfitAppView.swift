@@ -263,10 +263,10 @@ class EggLaunchManager: ObservableObject {
     }
     
     private func checlIfOrganic() {
-        let url = URL(string: "https://gcdsdk.appsflyer.com/install_data/v4.0/id6753870535")!
+        let url = URL(string: "https://gcdsdk.appsflyer.com/install_data/v4.0/id6753625851")!
         var components = URLComponents(url: url, resolvingAgainstBaseURL: true)!
         let queryItems: [URLQueryItem] = [
-            URLQueryItem(name: "devkey", value: "3ERPRZB3HpWKFpHixe8pQc"),
+            URLQueryItem(name: "devkey", value: "efbC7vNvdEdhD44rPp5wS4"),
             URLQueryItem(name: "device_id", value: AppsFlyerLib.shared().getAppsFlyerUID()),
         ]
         components.queryItems = components.queryItems.map { $0 + queryItems } ?? queryItems
