@@ -26,24 +26,6 @@ struct SettingsView: View {
     @State private var showToast = false
     @State private var showBackupAlert = false
     
-    var body: some View {
-        NavigationView {
-            settingsContent
-                .navigationTitle("Settings")
-                .toolbar {
-                    ToolbarItem(placement: .topBarTrailing) {
-                        FieryButton(title: "Apply Changes") {
-                            dataManager.saveData()
-                            showToast = true
-                        }
-                    }
-                }
-                .foregroundStyle(Color.design(.textPrimary))
-                .tint(.design(.accentOrange))
-                .overlay(PremiumToast(message: "Settings Saved!", show: $showToast))
-        }
-    }
-    
     @ViewBuilder
     private var settingsContent: some View {
         Form {
@@ -129,6 +111,25 @@ struct SettingsView: View {
         .scrollContentBackground(.hidden)
         .background(Color.design(.backgroundDark))
     }
+    
+    var body: some View {
+        NavigationView {
+            settingsContent
+                .navigationTitle("Settings")
+                .toolbar {
+                    ToolbarItem(placement: .topBarTrailing) {
+                        FieryButton(title: "Apply Changes") {
+                            dataManager.saveData()
+                            showToast = true
+                        }
+                    }
+                }
+                .foregroundStyle(Color.design(.textPrimary))
+                .tint(.design(.accentOrange))
+                .overlay(PremiumToast(message: "Settings Saved!", show: $showToast))
+        }
+    }
+    
 }
 
 

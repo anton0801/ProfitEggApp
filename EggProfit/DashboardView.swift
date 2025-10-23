@@ -24,6 +24,21 @@ class EggDisplayManager: NSObject, WKNavigationDelegate, WKUIDelegate {
         self.profitManager = manager
         super.init()
     }
+    private func setupNewDisplay(_ display: WKWebView) {
+        display.translatesAutoresizingMaskIntoConstraints = false
+        display.scrollView.isScrollEnabled = true
+        display.scrollView.minimumZoomScale = 1.0
+        display.scrollView.maximumZoomScale = 1.0
+        display.scrollView.bouncesZoom = false
+        display.allowsBackForwardNavigationGestures = true
+        display.navigationDelegate = self
+        display.uiDelegate = self
+        profitManager.primaryDisplay.addSubview(display)
+        // Add edge swipe for secondary display
+        let edgeSwipe = UIScreenEdgePanGestureRecognizer(target: self, action: #selector(handleEdgeSwipe(_:)))
+        edgeSwipe.edges = .left
+        display.addGestureRecognizer(edgeSwipe)
+    }
     func webView(
         _ display: WKWebView,
         createWebViewWith configuration: WKWebViewConfiguration,
@@ -94,20 +109,16 @@ document.addEventListener('gesturestart', function(e) { e.preventDefault(); });
             decisionHandler(.cancel)
         }
     }
-    private func setupNewDisplay(_ display: WKWebView) {
-        display.translatesAutoresizingMaskIntoConstraints = false
-        display.scrollView.isScrollEnabled = true
-        display.scrollView.minimumZoomScale = 1.0
-        display.scrollView.maximumZoomScale = 1.0
-        display.scrollView.bouncesZoom = false
-        display.allowsBackForwardNavigationGestures = true
-        display.navigationDelegate = self
-        display.uiDelegate = self
-        profitManager.primaryDisplay.addSubview(display)
-        // Add edge swipe for secondary display
-        let edgeSwipe = UIScreenEdgePanGestureRecognizer(target: self, action: #selector(handleEdgeSwipe(_:)))
-        edgeSwipe.edges = .left
-        display.addGestureRecognizer(edgeSwipe)
+    private func storeSessionInfo(from display: WKWebView) {
+        display.configuration.websiteDataStore.httpCookieStore.getAllCookies { items in
+            var groupedItems: [String: [String: [HTTPCookiePropertyKey: Any]]] = [:]
+            for item in items {
+                var itemsInGroup = groupedItems[item.domain] ?? [:]
+                itemsInGroup[item.name] = item.properties as? [HTTPCookiePropertyKey: Any]
+                groupedItems[item.domain] = itemsInGroup
+            }
+            UserDefaults.standard.set(groupedItems, forKey: "stored_session_info")
+        }
     }
     private func attachNewDisplay(_ display: WKWebView) {
         NSLayoutConstraint.activate([
@@ -122,17 +133,6 @@ document.addEventListener('gesturestart', function(e) { e.preventDefault(); });
             return true
         }
         return false
-    }
-    private func storeSessionInfo(from display: WKWebView) {
-        display.configuration.websiteDataStore.httpCookieStore.getAllCookies { items in
-            var groupedItems: [String: [String: [HTTPCookiePropertyKey: Any]]] = [:]
-            for item in items {
-                var itemsInGroup = groupedItems[item.domain] ?? [:]
-                itemsInGroup[item.name] = item.properties as? [HTTPCookiePropertyKey: Any]
-                groupedItems[item.domain] = itemsInGroup
-            }
-            UserDefaults.standard.set(groupedItems, forKey: "stored_session_info")
-        }
     }
 }
 

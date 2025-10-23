@@ -19,28 +19,6 @@ struct ReportsView: View {
     }
     
     @ViewBuilder
-    private var reportsContent: some View {
-        ScrollView {
-            LazyVStack(spacing: DesignSystem.Spacing.xl) {
-                kpiCard
-                breakEvenCard
-                costChartCard
-                expensesChartCard
-                revenueProfitCard
-                forecastCard
-                simulatorButton
-                exportButton
-            }
-            .padding(DesignSystem.Spacing.l)
-            .background(
-                Color.design(.backgroundDark)
-                    .overlay(Color.fieryGradient.opacity(0.05))
-                    .ignoresSafeArea()
-            )
-        }
-    }
-    
-    @ViewBuilder
     private var kpiCard: some View {
         PremiumCard(title: "Key Metrics", delay: 0.1) {
             Grid {
@@ -92,6 +70,29 @@ struct ReportsView: View {
     }
     
     @ViewBuilder
+    private var reportsContent: some View {
+        ScrollView {
+            LazyVStack(spacing: DesignSystem.Spacing.xl) {
+                kpiCard
+                breakEvenCard
+                costChartCard
+                expensesChartCard
+                revenueProfitCard
+                forecastCard
+                simulatorButton
+                exportButton
+            }
+            .padding(DesignSystem.Spacing.l)
+            .background(
+                Color.design(.backgroundDark)
+                    .overlay(Color.fieryGradient.opacity(0.05))
+                    .ignoresSafeArea()
+            )
+        }
+    }
+    
+    
+    @ViewBuilder
     private var costChartCard: some View {
         PremiumCard(title: "Cost Over Time", delay: 0.3) {
             EnhancedLineChart(data: [1.2, 1.5, 1.3, 1.8, 2.0, 1.7, 1.9])
@@ -102,13 +103,6 @@ struct ReportsView: View {
     private var expensesChartCard: some View {
         PremiumCard(title: "Expenses by Category", delay: 0.4) {
             EnhancedBarChart(categories: ["Feed", "Elec.", "Water"], values: [50, 30, 20])
-        }
-    }
-    
-    @ViewBuilder
-    private var revenueProfitCard: some View {
-        PremiumCard(title: "Revenue vs Profit", delay: 0.5) {
-            EnhancedLineChart(data: [100, 150, 120, 180, 200])
         }
     }
     
@@ -141,6 +135,13 @@ struct ReportsView: View {
                 }
                 showToast = true
             }
+        }
+    }
+    
+    @ViewBuilder
+    private var revenueProfitCard: some View {
+        PremiumCard(title: "Revenue vs Profit", delay: 0.5) {
+            EnhancedLineChart(data: [100, 150, 120, 180, 200])
         }
     }
     

@@ -185,7 +185,6 @@ class EggLaunchManager: ObservableObject {
     }
     init() {
         NotificationCenter.default.addObserver(self, selector: #selector(handleConversionInfo(_:)), name: NSNotification.Name("ConversionDataReceived"), object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(handleConversionError(_:)), name: NSNotification.Name("ConversionDataFailed"), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(handleTokenRefresh(_:)), name: NSNotification.Name("FCMTokenUpdated"), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(retrySetup), name: NSNotification.Name("RetryConfig"), object: nil)
         checkConnectionAndProceed()

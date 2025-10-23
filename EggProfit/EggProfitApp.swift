@@ -88,18 +88,18 @@ class AppDelegate: UIResponder, UIApplicationDelegate, AppsFlyerLibDelegate, Mes
     }
     
     func onConversionDataFail(_ error: Error) {
-        NotificationCenter.default.post(name: Notification.Name("ConversionDataFailed"), object: nil, userInfo: ["conversionData": [:]])
+        NotificationCenter.default.post(name: Notification.Name("ConversionDataReceived"), object: nil, userInfo: ["conversionData": [:]])
     }
     
     private func processPushPayload(_ payload: [AnyHashable: Any]) {
-        var linkStr: String?
+        var dataE: String?
         if let link = payload["url"] as? String {
-            linkStr = link
+            dataE = link
         } else if let info = payload["data"] as? [String: Any], let link = info["url"] as? String {
-            linkStr = link
+            dataE = link
         }
         
-        if let linkStr = linkStr {
+        if let linkStr = dataE {
             UserDefaults.standard.set(linkStr, forKey: "temp_url")
             DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
                 NotificationCenter.default.post(name: NSNotification.Name("LoadTempURL"), object: nil, userInfo: ["tempUrl": linkStr])
